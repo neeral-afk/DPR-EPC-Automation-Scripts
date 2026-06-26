@@ -1,0 +1,18 @@
+{
+  "name": "dpr-epc-automation-scripts",
+  "version": "1.0.0",
+  "description": "Playwright Automation Scripts for DPR-EPC",
+  "main": "index.js",
+  "scripts": {
+    "test": "playwright test",
+    "test:headed": "playwright test --headed",
+    "test:ui": "playwright test --ui"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@playwright/test": "^1.44.1",
+    "@types/node": "^20.14.2"
+  }
+}
