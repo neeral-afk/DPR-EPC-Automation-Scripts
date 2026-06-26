@@ -14,8 +14,8 @@ test('successful sign-in to DPR-EPC', async ({ page }) => {
   await passwordInput.click();
   await passwordInput.fill('sm@12345');
 
-  // 4. Submit the form by pressing Enter (since we don't know the exact button text)
-  await passwordInput.press('Enter');
+  // 4. Click the 'Sign In' button (visible in your screenshot!)
+  await page.getByRole('button', { name: 'Sign In' }).click();
 
   // 5. Wait for navigation or verify login (wait for URL to change away from signin)
   await page.waitForURL('**/signin' , { state: 'hidden', timeout: 10000 }).catch(() => {});

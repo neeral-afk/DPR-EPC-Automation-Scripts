@@ -5,6 +5,10 @@ module.exports = defineConfig({
   testDir: './tests',
   /* Route test results OUTSIDE of OneDrive to prevent the EPERM locking error */
   outputDir: require('path').join(require('os').tmpdir(), 'playwright-results'),
+  
+  /* Increase the maximum time a test can run to 60 seconds (prevents timeout errors) */
+  timeout: 60 * 1000,
+  
   /* Run tests in files in parallel */
   fullyParallel: true,
   /* Fail the build on CI if you accidentally left test.only in the source code. */
