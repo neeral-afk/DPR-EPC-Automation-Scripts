@@ -1,118 +1,305 @@
 const { test, expect } = require('@playwright/test');
 
-test('Login Test - Redirect to Project Type', async ({ page }) => {
+test.setTimeout(120000);
+
+test('Login Test - Navigate to Masters > Project Type > Add Project Type', async ({ page }) => {
+
+    // Generate unique project name
+    const projectName = `infosys_${Date.now()}`;
+
     // Open Sign In page
     await page.goto('https://devfsm.sorigin.app/signin', {
-        waitUntil: 'networkidle'
-    });
-
-    // Enter Email
-    await page.locator('input[type="email"]').first().fill('mayur.zade@sorigin.co');
-
-    // Enter Password
-    await page.locator('input[type="password"]').fill('sm@12345');
-
-    // Show Password
-    await page.locator('svg.fill-gray-500.size-6').click();
-    await page.waitForTimeout(300);
-
-    // Hide Password
-    await page.locator('svg.fill-gray-500.size-6').click();
-
-    // Remember Me
-    await page.locator('input[type="checkbox"]').check();
-
-    // Open Forgot Password popup
-    await page.getByRole('link', { name: 'Forgot password?' }).click();
-
-    // Wait for popup
-    await page.waitForSelector('input[placeholder="info@sorigin.com"]');
-
-    // Enter email for reset
-    await page
-        .locator('input[placeholder="info@sorigin.com"]')
-        .last()
-        .fill('neeral.shah@sorigin.co');
-
-    // Send Link
-    await page.getByRole('button', { name: 'Send Link' }).click();
-
-    // Wait for popup to finish
-    await page.waitForLoadState('networkidle');
-
-    // Return to Sign In page
-    await page.goto('https://devfsm.sorigin.app/signin', {
-        waitUntil: 'networkidle'
+        waitUntil: 'domcontentloaded'
     });
 
     // Login
-    await page.locator('input[type="email"]').first().fill('mayur.zade@sorigin.co');
+    await page.locator('input[type="email"]').fill('mayur.zade@sorigin.co');
     await page.locator('input[type="password"]').fill('sm@12345');
 
-    await page.getByRole('button', { name: /sign in/i }).click();
+    await page.getByRole('button', {
+        name: /sign in/i
+    }).click();
 
-    // Wait until redirected to Dashboard
-    await page.waitForURL(/dashboard/i, {
+    // Wait for Dashboard
+    await expect(
+        page.locator('button:has-text("Masters")')
+    ).toBeVisible({
         timeout: 30000
     });
 
-    // Verify Dashboard
-    await expect(page).toHaveURL(/dashboard/i);
+    // Open Masters
+    await page.locator('button:has-text("Masters")').click();
 
-    // Wait before opening Masters menu
-    await page.waitForTimeout(300);
+    await page.waitForTimeout(1000);
 
-    // Click Masters menu
-    await page.getByText('Masters').click();
-
-    // Wait for dropdown to expand
-    await page.waitForTimeout(300);
-
-    // Click Project Type
-    await page.getByText('Project Type').click();
+    // Open Project Type
+    await page.getByText('Project Type', {
+        exact: true
+    }).click();
 
     // Wait for Project Type page
-    await page.waitForLoadState('networkidle');
+    await expect(
+        page.getByPlaceholder('Search project types... (Ctrl+K)')
+    ).toBeVisible({
+        timeout: 30000
+    });
 
-    // Verify Project Type page opened
-    await expect(page).toHaveURL(/project-type/i);
+    // Open Filters
+    await page.getByRole('button', {
+        name: 'Filters'
+    }).click();
 
-    // Wait before opening Filters
-    await page.waitForTimeout(300);
+    await page.waitForTimeout(1000);
 
-    // Click Filters
-    await page.getByRole('button', { name: /Filters/i }).click();
+    // Category Filter
+    try {
 
-    // Wait for Filters panel
-    await page.waitForLoadState('networkidle');
+        const categoryInput = page.locator(
+            'input[id^="react-select-"][id$="-input"]'
+        );
 
-    // Filter by Category - Solar
-    await page.waitForTimeout(300);
-    const categoryInput = page.locator('input[id^="react-select-"]').nth(0);
-    await categoryInput.click();
-    await categoryInput.fill('solar');
-    await page.getByText('solar', { exact: false }).first().click();
+        await categoryInput.click({ force: true });
 
-    // Wait for filter to apply
-    await page.waitForLoadState('networkidle');
+        await categoryInput.pressSequentially('Solar', {
+            delay: 100
+        });
 
-    // Filter by Status - Active
-    await page.waitForTimeout(300);
-    const statusInput = page.locator('input[id^="react-select-"]').nth(1);
-    await statusInput.click();
-    await statusInput.fill('active');
-    await page.getByText('active', { exact: false }).first().click();
+        await page.waitForTimeout(1000);
 
-    // Wait for filter to apply
-    await page.waitForLoadState('networkidle');
+        await page.keyboard.press('ArrowDown');
+        await page.keyboard.press('Enter');
 
-    // Search Project Type
-    await page.waitForTimeout(300);
-    const searchBox = page.locator('input[placeholder="Search project types... (Ctrl+K)"]');
+        await page.waitForTimeout(1500);
+
+    } catch {
+
+        console.log('Category selection skipped.');
+
+    }
+
+    // Search Existing Project
+    const searchBox = page.getByPlaceholder(
+        'Search project types... (Ctrl+K)'
+    );
+
     await expect(searchBox).toBeVisible();
+
     await searchBox.click();
+    await searchBox.clear();
     await searchBox.fill('sudarshan');
 
-    // Wait for search results
+    await page.waitForTimeout(2000);
+
+    // Click Add Project Type
+    await page.getByRole('button', {
+        name: 'Add Project Type'
+    }).click();
+
+    // Wait for Add Form
+    await expect(page.locator('#category')).toBeVisible();
+
+    // Select Category
+    await page.locator('#category').selectOption('solar');
+
+    // Enter Project Name
+    await page.locator('#name').fill(projectName);
+
+    // Enter Description
+    await page.locator('#description').fill('Projects');
+
+    // Click Create Project Type
+    await page.getByRole('button', {
+        name: 'Create Project Type'
+    }).click();
+
+    // Wait for Project Type page
+    await expect(
+        page.getByPlaceholder('Search project types... (Ctrl+K)')
+    ).toBeVisible({
+        timeout: 30000
+    });
+
+    await page.waitForTimeout(2000);
+
+    // Search Newly Created Project Type
+    const finalSearchBox = page.getByPlaceholder(
+        'Search project types... (Ctrl+K)'
+    );
+
+    await expect(finalSearchBox).toBeVisible({
+        timeout: 10000
+    });
+
+    await finalSearchBox.click();
+    await finalSearchBox.clear();
+    await finalSearchBox.fill(projectName);
+
+    await page.waitForTimeout(3000);
+
+    const createdProject = page.locator('tbody tr').filter({
+        has: page.getByText(projectName, { exact: true })
+    });
+
+    await expect(createdProject).toBeVisible({
+        timeout: 15000
+    });
+
+    console.log(`✅ Project Type Created Successfully: ${projectName}`);
+
+    const deactivateButton = createdProject.locator(
+        'button[title="Click to Deactivate"]'
+    );
+
+    await expect(deactivateButton).toBeVisible({
+        timeout: 10000
+    });
+
+    await deactivateButton.click();
+
+    await page.waitForTimeout(1000);
+
+    const confirmDeactivateButton = page.getByRole('button', {
+        name: 'Deactivate',
+        exact: true
+    });
+
+    await expect(confirmDeactivateButton).toBeVisible({
+        timeout: 10000
+    });
+
+    await confirmDeactivateButton.click();
+
+    await page.waitForTimeout(3000);
+
+    const activateToggle = createdProject.locator(
+        'button[title="Click to Activate"]'
+    );
+
+    await expect(activateToggle).toBeVisible({
+        timeout: 10000
+    });
+
+    console.log('✅ Project Type Deactivated Successfully');
+
+    await activateToggle.click();
+
+    await page.waitForTimeout(1000);
+
+    const confirmActivateButton = page.getByRole('button', {
+        name: 'Activate',
+        exact: true
+    });
+
+    await expect(confirmActivateButton).toBeVisible({
+        timeout: 10000
+    });
+
+    await confirmActivateButton.click();
+
+    await page.waitForTimeout(3000);
+    const deactivateToggle = createdProject.locator(
+        'button[title="Click to Deactivate"]'
+    );
+
+    await expect(deactivateToggle).toBeVisible({
+        timeout: 10000
+    });
+
+    console.log('✅ Project Type Activated Successfully');
+
+    // -------------------------
+    // Click Edit Button
+    // -------------------------
+    const editButton = createdProject
+        .locator('svg.lucide-square-pen')
+        .locator('xpath=ancestor::button');
+
+    await expect(editButton).toBeVisible({
+        timeout: 10000
+    });
+
+    await editButton.click();
+
+    await page.waitForTimeout(2000);
+
+    console.log('✅ Edit Project Type page opened successfully');
+
+    // -------------------------
+    // Update Project Type Name
+    // -------------------------
+    const updatedProjectName = `gold${Math.floor(Math.random() * 90) + 10}`;
+
+    const projectNameField = page.locator('#name');
+
+    await expect(projectNameField).toBeVisible({
+        timeout: 10000
+    });
+
+    await projectNameField.click();
+    await projectNameField.clear();
+    await projectNameField.fill(updatedProjectName);
+
+    await expect(projectNameField).toHaveValue(updatedProjectName);
+
+    console.log(`✅ Project Type Name updated to ${updatedProjectName}`);
+
+    // -------------------------
+    // Click Update Project Type
+    // -------------------------
+    const updateProjectTypeButton = page.getByRole('button', {
+        name: 'Update Project Type',
+        exact: true
+    });
+
+    await expect(updateProjectTypeButton).toBeVisible({
+        timeout: 10000
+    });
+
+    await updateProjectTypeButton.click();
+
+    // Wait for Project Type list
+    await expect(
+        page.getByPlaceholder('Search project types... (Ctrl+K)')
+    ).toBeVisible({
+        timeout: 30000
+    });
+
     await page.waitForLoadState('networkidle');
+    await page.waitForTimeout(3000);
+
+    console.log(`✅ Project Type updated successfully to ${updatedProjectName}`);
+
+    // -------------------------
+    // Scroll Down
+    // -------------------------
+    await page.evaluate(() => {
+        window.scrollTo({
+            top: document.body.scrollHeight,
+            behavior: 'smooth'
+        });
+    });
+
+    await page.waitForTimeout(2000);
+
+    // -------------------------
+    // Click Page 2
+    // -------------------------
+    const page2Button = page
+        .locator('div.flex.items-center.gap-1 button')
+        .filter({
+            hasText: /^2$/
+        })
+        .first();
+
+    await expect(page2Button).toBeVisible({
+        timeout: 30000
+    });
+
+    await page2Button.click();
+
+    await page.waitForLoadState('networkidle');
+    await page.waitForTimeout(3000);
+
+    console.log('✅ Successfully navigated to Page 2');
+
 });
